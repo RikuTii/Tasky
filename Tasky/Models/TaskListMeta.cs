@@ -6,7 +6,7 @@ namespace Tasky.Models
 {
     public class TaskListMeta
     {
-        public int Id { get; set; }
+        public int? Id { get; set; }
         [Key]
         [ForeignKey("TaskList")]
         public int TaskListID { get; set; }

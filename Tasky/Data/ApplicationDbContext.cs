@@ -42,7 +42,7 @@ namespace Tasky.Data
            .HasMany(e => e.Users)
            .WithOne()
            .HasForeignKey(e => e.Id);
-
+            modelBuilder.Entity<TaskListMeta>().Property(e => e.Id).HasComputedColumnSql();
 /*           modelBuilder.Entity<TaskListMeta>()
             .HasOne(e => e.TaskList)
             .WithOne()

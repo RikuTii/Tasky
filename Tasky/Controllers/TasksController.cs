@@ -15,6 +15,8 @@ using System.Security.Claims;
 using System.Net.Http;
 using Duende.IdentityServer.Extensions;
 using Duende.IdentityServer.Validation;
+using Newtonsoft.Json.Linq;
+using System.Text.Json.Nodes;
 
 namespace Tasky.Controllers
 {
@@ -28,7 +30,6 @@ namespace Tasky.Controllers
 
         public TasksController(ApplicationDbContext context, UserManager<ApplicationUser> userManager)
         {
-            Console.WriteLine("mounted controller");
             _context = context;
             _userManager = userManager;
         }
@@ -148,6 +149,68 @@ namespace Tasky.Controllers
 
             }
 
+        }
+
+        [Authorize]
+        [HttpPost("ShareTaskList")]
+        public void ShareTaskList([FromBody] JsonValue json)
+        {
+            JObject data = JObject.Parse(json.ToString());
+            var idString = data["id"]?.ToString();
+            if (Int32.TryParse(idString, out int id))
+            {
+                var email = data["email"]?.ToString();
+                UserAccount account = _context.UserAccount.Where(e => e.Email == email).First();
+                if (account != null)
+                {
+                    var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                    ApplicationUser authUser = _context.Users.Where(e => e.Id == userId).Include(e => e.Account).First();
+                    if (authUser != null)
+                    {
+                        //make sure caller owns the tasklist
+                        TaskList tasklist = _context.TaskList.Where(e => e.Id == id).First();
+                        if (tasklist.CreatorID == authUser.Account.Id)
+                        {
+                            TaskListMeta meta = new()
+                            {
+                                TaskListID = id,
+                                UserAccountID = account.Id,
+                                Id = null
+                            };
+                            _context.Add(meta);
+                            _context.SaveChanges();
+                        }
+                    }
+                }
+            }
+        }
+        [Authorize]
+        [HttpPost("RemoveShareTaskList")]
+        public void RemoveShareTaskList([FromBody] JsonValue json)
+        {
+            JObject data = JObject.Parse(json.ToString());
+            var idString = data["id"]?.ToString();
+            if (Int32.TryParse(idString, out int id))
+            {
+                var email = data["email"]?.ToString();
+                UserAccount account = _context.UserAccount.Where(e => e.Email == email).First();
+                if (account != null)
+                {
+                    var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                    ApplicationUser authUser = _context.Users.Where(e => e.Id == userId).Include(e => e.Account).First();
+                    if (authUser != null)
+                    {
+                        Console.WriteLine("removing " + id + " and " + account.Id);
+                        //make sure caller owns the tasklist
+                        TaskList tasklist = _context.TaskList.Where(e => e.Id == id).First();
+                        if (tasklist.CreatorID == authUser.Account.Id)
+                        {    
+                            _context.Remove(_context.TaskListMeta.Where(e => e.TaskListID == id).Where(e => e.UserAccountID == account.Id).First());
+                            _context.SaveChanges();
+                        }
+                    }
+                }
+            }
         }
     }
 }

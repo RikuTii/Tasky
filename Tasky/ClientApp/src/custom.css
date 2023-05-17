@@ -12,3 +12,12 @@ code {
   background-color: #1b6ec2;
   border-color: #1861ac;
 }
+
+body {
+  background-color: rgb(44, 44, 44);
+  color: white;
+}
+
+p {
+  color: white;
+}
