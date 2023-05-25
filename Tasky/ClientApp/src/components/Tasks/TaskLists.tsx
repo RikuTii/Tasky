@@ -63,7 +63,6 @@ const TaskLists = ({}) => {
   };
   const removeTaskListShare = async (email: string) => {
     const token = await authService.getAccessToken();
-    console.log("removing",shareList?.id, email);
     fetch("tasks/RemoveShareTaskList", {
       method: "POST",
       body: JSON.stringify({

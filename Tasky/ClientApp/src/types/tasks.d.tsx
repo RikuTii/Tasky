@@ -4,6 +4,7 @@ export type Tasklist = {
     createdDate?: string;
     creator?: any;
     taskListMetas?: any;
+    tasks?: Task[];
   };
   
 export type Task = {

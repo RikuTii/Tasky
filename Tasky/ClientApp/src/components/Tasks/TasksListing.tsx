@@ -1,15 +1,21 @@
-import React, { useEffect, useState, useContext } from "react";
+import React, { useEffect, useState, useContext, useCallback } from "react";
 import authService from "../api-authorization/AuthorizeService";
 import "react-toastify/dist/ReactToastify.css";
 import { GlobalContext } from "../GlobalContext/GlobalContext";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Tasklist, Task } from "../../types/tasks.d";
 import { Container, Stack } from "react-bootstrap";
+import debounce from "lodash/debounce";
 
 const TasksListing = ({}) => {
   const [currentTaskList, setCurrentTaskList] = useState<Tasklist>();
   const [tasks, setTasks] = useState<Array<Task>>();
   const { user } = useContext(GlobalContext);
+
+
+  useEffect(() => {
+    loadTaskLists();
+  }, []);
 
   const loadTaskLists = async () => {
     const token = await authService.getAccessToken();
@@ -18,8 +24,12 @@ const TasksListing = ({}) => {
     });
     const data = await response.json();
     setCurrentTaskList(data[0]);
-    setTasks(data[0].tasks);
   };
+
+  useEffect(() => {
+    setTasks(currentTaskList?.tasks);
+    console.log("loaded tasks",currentTaskList?.id);
+  }, [currentTaskList]);
 
   const createNewTask = () => {
     const id = tasks?.slice(-1)[0].id;
@@ -41,15 +51,19 @@ const TasksListing = ({}) => {
     }
   };
 
+
+  const delayedTaskUpdate = useCallback( 
+    debounce((q: Task) => onTaskUpdated(q), 1000), []);
+
   const onTaskUpdated = async (task: Task) => {
     const token = await authService.getAccessToken();
-    fetch("tasks/CreateOrUpdateTask", {
+    fetch("task/CreateOrUpdateTask", {
       method: "POST",
       body: JSON.stringify({
-        Title: task?.title,
-        Id: task?.id,
-        Status: task?.status,
-        TaskListId: currentTaskList?.id,
+        title: task?.title,
+        id: task?.id,
+        status: task?.status,
+        taskListId: task?.taskList?.id,
       }),
       headers: !token
         ? {}
@@ -65,9 +79,6 @@ const TasksListing = ({}) => {
       });
   }
 
-  useEffect(() => {
-    loadTaskLists();
-  }, []);
 
   return (
     <Container>
@@ -85,6 +96,7 @@ const TasksListing = ({}) => {
               if (currentTask) {
                 currentTask.title = event.target.value;
                 setTasks(newTasks);
+                delayedTaskUpdate(currentTask);
               }
             }}
           />
