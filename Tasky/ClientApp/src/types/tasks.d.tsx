@@ -14,4 +14,5 @@ export type Task = {
     creator?: any;
     taskList?: Tasklist;
     status?: number;
+    taskListID?: number;
 };

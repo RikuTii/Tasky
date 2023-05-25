@@ -6,12 +6,15 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Tasklist, Task } from "../../types/tasks.d";
 import { Container, Stack } from "react-bootstrap";
 import debounce from "lodash/debounce";
+import Dropdown from "react-bootstrap/Dropdown";
+import DropdownButton from "react-bootstrap/DropdownButton";
+import { forEach } from "lodash";
 
 const TasksListing = ({}) => {
   const [currentTaskList, setCurrentTaskList] = useState<Tasklist>();
+  const [taskLists, setTaskLists] = useState<Tasklist[]>();
   const [tasks, setTasks] = useState<Array<Task>>();
   const { user } = useContext(GlobalContext);
-
 
   useEffect(() => {
     loadTaskLists();
@@ -24,25 +27,42 @@ const TasksListing = ({}) => {
     });
     const data = await response.json();
     setCurrentTaskList(data[0]);
+    setTaskLists(data);
+  };
+
+  const refreshTaskLists = async (id: number) => {
+    const token = await authService.getAccessToken();
+    const response = await fetch("tasks/Index", {
+      headers: !token ? {} : { Authorization: `Bearer ${token}` },
+    });
+    const data = await response.json();
+    setTaskLists(data);
+    forEach(data, (taskList: Tasklist) => {
+      if (taskList.id == id) {
+        setCurrentTaskList(taskList);
+      }
+    });
   };
 
   useEffect(() => {
     setTasks(currentTaskList?.tasks);
-    console.log("loaded tasks",currentTaskList?.id);
   }, [currentTaskList]);
 
   const createNewTask = () => {
-    const id = tasks?.slice(-1)[0].id;
-    let nextId = 0;
-    if (id) {
-      nextId = id + 1;
+    let id = 1;
+    if (tasks && tasks?.length > 0) {
+      id = tasks?.slice(-1)[0].id ?? 1;
     }
+    let nextId = id + 1;
+
     const newTask: Task = {
       id: nextId,
       title: "",
       createdDate: new Date().toISOString(),
       creator: user?.id,
+      status: 4,
       taskList: currentTaskList,
+      taskListID: currentTaskList?.id,
     };
     if (tasks) {
       const newTasks = [...tasks];
@@ -51,9 +71,10 @@ const TasksListing = ({}) => {
     }
   };
 
-
-  const delayedTaskUpdate = useCallback( 
-    debounce((q: Task) => onTaskUpdated(q), 1000), []);
+  const delayedTaskUpdate = useCallback(
+    debounce((q: Task) => onTaskUpdated(q), 1000),
+    []
+  );
 
   const onTaskUpdated = async (task: Task) => {
     const token = await authService.getAccessToken();
@@ -63,7 +84,7 @@ const TasksListing = ({}) => {
         title: task?.title,
         id: task?.id,
         status: task?.status,
-        taskListId: task?.taskList?.id,
+        taskListId: task?.taskListID ?? task?.taskList?.id,
       }),
       headers: !token
         ? {}
@@ -72,17 +93,35 @@ const TasksListing = ({}) => {
             "Content-type": "application/json; charset=UTF-8",
           },
     })
-      .then(() => {      
+      .then(() => {
+        refreshTaskLists(task?.taskListID ?? task?.taskList?.id ?? 0);
       })
       .catch((err) => {
         console.log(err.message);
       });
-  }
-
+  };
 
   return (
     <Container>
       <h1>Current Tasks</h1>
+      <h2>{currentTaskList?.name}</h2>
+      <DropdownButton
+        id="dropdown-basic-button"
+        title="Dropdown button"
+        style={{ marginBottom: 8 }}
+      >
+        {taskLists?.map((taskList: Tasklist) => (
+          <Dropdown.Item
+            key={taskList.id}
+            onClick={() => {
+              setCurrentTaskList(taskList);
+            }}
+          >
+            {taskList.name}
+          </Dropdown.Item>
+        ))}
+      </DropdownButton>
+
       {tasks?.map((task: Task) => (
         <Stack key={task.id} direction="horizontal" gap={3}>
           <FontAwesomeIcon icon={["fas", "list"]} color="white" size="1x" />
@@ -112,10 +151,9 @@ const TasksListing = ({}) => {
               const newTasks = [...tasks];
               const currentTask = newTasks.find((e) => e.id === task.id);
               if (currentTask) {
-                if(currentTask.status === 0) {
+                if (currentTask.status === 0) {
                   currentTask.status = 1;
-                }
-                else {
+                } else {
                   currentTask.status = 0;
                 }
                 setTasks(newTasks);
@@ -124,18 +162,20 @@ const TasksListing = ({}) => {
           >
             {task.status === 1 && (
               <div style={{ marginLeft: 4 }}>
-              <FontAwesomeIcon
-                icon={["fas", "check"]}
-                color="white"
-                size="1x"
-              />
-            </div>
+                <FontAwesomeIcon
+                  icon={["fas", "check"]}
+                  color="white"
+                  size="1x"
+                />
+              </div>
             )}
-    
           </div>
         </Stack>
       ))}
-      <div style={{marginLeft: 'auto', alignItems: 'flex-end'}} onClick={createNewTask}>
+      <div
+        style={{ marginLeft: "auto", alignItems: "flex-end" }}
+        onClick={createNewTask}
+      >
         <FontAwesomeIcon
           icon={["fas", "circle-plus"]}
           color="white"

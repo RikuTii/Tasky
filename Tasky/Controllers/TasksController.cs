@@ -128,7 +128,6 @@ namespace Tasky.Controllers
         [HttpPost("CreateTaskList")]
         public void CreateTaskList([Bind("Name,Description")] Tasky.Models.TaskList task)
         {
-            Console.WriteLine("called post");
             if (ModelState.IsValid)
             {
                 var userId = User.FindFirstValue(ClaimTypes.NameIdentifier); // will give the user's userId
@@ -200,7 +199,6 @@ namespace Tasky.Controllers
                     ApplicationUser authUser = _context.Users.Where(e => e.Id == userId).Include(e => e.Account).First();
                     if (authUser != null)
                     {
-                        Console.WriteLine("removing " + id + " and " + account.Id);
                         //make sure caller owns the tasklist
                         TaskList tasklist = _context.TaskList.Where(e => e.Id == id).First();
                         if (tasklist.CreatorID == authUser.Account.Id)
