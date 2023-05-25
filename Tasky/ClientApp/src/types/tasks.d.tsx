@@ -11,5 +11,6 @@ export type Task = {
     title?: string;
     createdDate?: string;
     creator?: any;
-    taskList: Tasklist;
+    taskList?: Tasklist;
+    status?: number;
 };

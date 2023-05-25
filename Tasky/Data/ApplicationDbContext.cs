@@ -24,9 +24,6 @@ namespace Tasky.Data
         {
             base.OnModelCreating(modelBuilder);
 
-
-            Console.WriteLine("created db");
-
             modelBuilder.Entity<ApplicationUser>()
               .HasOne(e => e.Account)
               .WithOne(e => e.User)
@@ -42,27 +39,14 @@ namespace Tasky.Data
            .HasMany(e => e.Users)
            .WithOne()
            .HasForeignKey(e => e.Id);
+
             modelBuilder.Entity<TaskListMeta>().Property(e => e.Id).HasComputedColumnSql();
-/*           modelBuilder.Entity<TaskListMeta>()
-            .HasOne(e => e.TaskList)
-            .WithOne()
-            .HasForeignKey<TaskList>(e => e.Id);
-            /*
-            modelBuilder.Entity<TaskList>()
-            .HasOne(e => e.Creator)
-            .WithOne()
-            .HasForeignKey<TaskList>(e => e.CreatorID);*/
+
 
             modelBuilder.Entity<Tasky.Models.Task>()
             .HasOne(e => e.Creator)
             .WithOne()
-            .HasForeignKey<Tasky.Models.Task> (e => e.CreatorId);
-            /* modelBuilder.Entity<TaskList>().HasMany<TaskListMeta>().WithOne("TaskListID");
-             modelBuilder.Entity<TaskList>().HasMany<Tasky.Models.Task>().WithOne();
-             modelBuilder.Entity<ApplicationUser>().HasOne<UserAccount>().WithOne("UserAccountID");
-             modelBuilder.Entity<UserAccount>().HasOne<ApplicationUser>().WithOne("ApplicationUserID");*/
-
-
+            .HasForeignKey<Tasky.Models.Task>(e => e.CreatorId);
         }
     }
 }

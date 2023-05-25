@@ -7,14 +7,15 @@ import "react-toastify/dist/ReactToastify.css";
 import { GlobalContext } from "../GlobalContext/GlobalContext";
 import { toastProperties } from "../../types/global.d";
 
-
-const CreateTask = ({}) => {
+const CreateTaskList = ({}) => {
   const [tasklist, setTaskList] = useState();
-  const [newTask, setNewTask] = useState({ name: "", description: "", listId: 0 });
+  const [newlist, setNewList] = useState({ name: "", description: "" });
   const { user, setUser } = useContext(GlobalContext);
 
   useEffect(() => {
-
+    toast("Welcome", toastProperties);
+    //  setUser({id: 2, username: 'test5'});
+    console.log(user);
   }, []);
 
   const loadTaskLists = async () => {
@@ -27,14 +28,13 @@ const CreateTask = ({}) => {
     //  this.setState({ tasklist: data.Result, loading: false });
   };
 
-  const createNewTask = async () => {
+  const createTaskList = async () => {
     const token = await authService.getAccessToken();
-    fetch("tasks/CreateTask", {
+    fetch("tasks/CreateTaskList", {
       method: "POST",
       body: JSON.stringify({
-        Name: newTask?.name,
-        Description: newTask?.description,
-        Id: newTask?.listId,
+        Name: newlist?.name,
+        Description: newlist?.description,
       }),
       headers: !token
         ? {}
@@ -44,12 +44,14 @@ const CreateTask = ({}) => {
           },
     })
       .then(() => {
-        toast("Created new task: " + newTask?.name, toastProperties);
-        setNewTask({ name: "", description: "", listId: 0 });
+        toast("Created new tasklist: " + newlist?.name, toastProperties);
+        setNewList({ name: "", description: "" });
       })
       .catch((err) => {
         console.log(err.message);
       });
+    //const data = await response.json();
+    //this.setState({ forecasts: data, loading: false });
   };
 
   return (
@@ -61,14 +63,13 @@ const CreateTask = ({}) => {
           <Form.Control
             type="text"
             placeholder="Name"
-            value={newTask.name}
+            value={newlist.name}
             onChange={(event) => {
               const data = {
                 name: event.target.value,
-                description: newTask.description,
-                listId: newTask.listId
+                description: newlist.description,
               };
-              setNewTask(data);
+              setNewList(data);
             }}
           />
         </Form.Group>
@@ -78,23 +79,22 @@ const CreateTask = ({}) => {
           <Form.Control
             type="textarea"
             placeholder="Description"
-            value={newTask.description}
+            value={newlist.description}
             onChange={(event) => {
               const data = {
-                name: newTask.name,
+                name: newlist.name,
                 description: event.target.value,
-                listId: newTask.listId
               };
-              setNewTask(data);
+              setNewList(data);
             }}
           />
         </Form.Group>
-        <Button variant="primary" type="button" onClick={createNewTask}>
-          Create new task
+        <Button variant="primary" type="button" onClick={createTaskList}>
+          Create new tasklist
         </Button>
       </Form>
     </div>
   );
 };
 
-export default CreateTask;
+export default CreateTaskList;

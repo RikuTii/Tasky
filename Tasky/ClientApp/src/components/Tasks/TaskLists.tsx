@@ -10,6 +10,8 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Col, Container, Row } from "react-bootstrap";
 import { toastProperties } from "../../types/global.d";
 import { Tasklist } from "../../types/tasks.d";
+import '../Styles/Styles.css'
+
 
 const TaskLists = ({}) => {
   const [tasklists, setTaskLists] = useState<Tasklist[] | null>(null);
@@ -108,20 +110,20 @@ const TaskLists = ({}) => {
       <Table striped bordered hover>
         <thead>
           <tr>
-            <th>Title</th>
-            <th>Date</th>
-            <th>Creator</th>
-            <th>Share</th>
-            <th>Delete</th>
+            <th className="text-light">Title</th>
+            <th className="text-light">Date</th>
+            <th className="text-light">Creator</th>
+            <th className="text-light">Share</th>
+            <th className="text-light">Delete</th>
           </tr>
         </thead>
         <tbody>
           {tasklists.map((tasklist) => (
             <tr key={tasklist.id}>
-              <td>{tasklist.name}</td>
-              <td>{tasklist.createdDate}</td>
-              <td>{tasklist.creator ? tasklist.creator.firstName : 0}</td>
-              <td>
+              <td className="text-light">{tasklist.name}</td>
+              <td className="text-light">{tasklist.createdDate}</td>
+              <td className="text-light">{tasklist.creator ? tasklist.creator.firstName : 0}</td>
+              <td className="text-light">
                 <div
                   style={{ alignContent: "center", justifyContent: "center" }}
                   onClick={() => {
@@ -153,10 +155,10 @@ const TaskLists = ({}) => {
       </Table>
 
       <Modal show={showShareModal} onHide={handleClose}>
-        <Modal.Header closeButton>
+        <Modal.Header closeButton className="primary-background">
           <Modal.Title>Share tasklist</Modal.Title>
         </Modal.Header>
-        <Modal.Body>
+        <Modal.Body className="primary-background">
           <h3>Shared users</h3>
           <div>
             <p>{shareList?.name}</p>
@@ -169,7 +171,7 @@ const TaskLists = ({}) => {
                       <span style={{ fontWeight: "bold" }}>
                         {meta.userAccount.firstName}
                       </span>{" "}
-                      {meta.userAccount.email}
+                      <span>{meta.userAccount.email}</span>
                     </Col>
 
                     <Col>
@@ -208,7 +210,7 @@ const TaskLists = ({}) => {
             </Col>
           </Row>
         </Modal.Body>
-        <Modal.Footer>
+        <Modal.Footer className="primary-background">
           <Button variant="secondary" onClick={handleClose}>
             Close
           </Button>
