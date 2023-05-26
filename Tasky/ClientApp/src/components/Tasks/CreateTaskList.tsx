@@ -12,22 +12,6 @@ const CreateTaskList = ({}) => {
   const [newlist, setNewList] = useState({ name: "", description: "" });
   const { user, setUser } = useContext(GlobalContext);
 
-  useEffect(() => {
-    toast("Welcome", toastProperties);
-    //  setUser({id: 2, username: 'test5'});
-    console.log(user);
-  }, []);
-
-  const loadTaskLists = async () => {
-    const token = await authService.getAccessToken();
-    const response = await fetch("tasks/TaskList", {
-      headers: !token ? {} : { Authorization: `Bearer ${token}` },
-    });
-    const data = await response.json();
-    console.log(data);
-    //  this.setState({ tasklist: data.Result, loading: false });
-  };
-
   const createTaskList = async () => {
     const token = await authService.getAccessToken();
     fetch("tasks/CreateTaskList", {

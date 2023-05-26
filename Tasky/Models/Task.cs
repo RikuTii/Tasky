@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
-
+using static Tasky.Controllers.TaskController;
+using static Tasky.Controllers.TaskController.TaskyStatus;
 namespace Tasky.Models
 {
     public class Task
@@ -12,6 +13,6 @@ namespace Tasky.Models
         public virtual UserAccount Creator { get; set; }
         public int TaskListID { get; set; }
         public virtual TaskList TaskList { get; set; }
-
+        public TaskyStatus? Status { get; set; }
     }
 }

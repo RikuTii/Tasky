@@ -16,3 +16,10 @@ export type Task = {
     status?: number;
     taskListID?: number;
 };
+
+export enum TaskStatus
+{
+  NotCreated,
+  NotDone,
+  Done
+}

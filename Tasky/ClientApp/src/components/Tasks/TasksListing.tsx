@@ -3,7 +3,7 @@ import authService from "../api-authorization/AuthorizeService";
 import "react-toastify/dist/ReactToastify.css";
 import { GlobalContext } from "../GlobalContext/GlobalContext";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { Tasklist, Task } from "../../types/tasks.d";
+import { Tasklist, Task, TaskStatus } from "../../types/tasks.d";
 import { Container, Stack } from "react-bootstrap";
 import debounce from "lodash/debounce";
 import Dropdown from "react-bootstrap/Dropdown";
@@ -60,7 +60,7 @@ const TasksListing = ({}) => {
       title: "",
       createdDate: new Date().toISOString(),
       creator: user?.id,
-      status: 4,
+      status: TaskStatus.NotCreated,
       taskList: currentTaskList,
       taskListID: currentTaskList?.id,
     };
@@ -107,7 +107,7 @@ const TasksListing = ({}) => {
       <h2>{currentTaskList?.name}</h2>
       <DropdownButton
         id="dropdown-basic-button"
-        title="Dropdown button"
+        title="Tasklists"
         style={{ marginBottom: 8 }}
       >
         {taskLists?.map((taskList: Tasklist) => (
@@ -151,11 +151,15 @@ const TasksListing = ({}) => {
               const newTasks = [...tasks];
               const currentTask = newTasks.find((e) => e.id === task.id);
               if (currentTask) {
-                if (currentTask.status === 0) {
-                  currentTask.status = 1;
+                if (
+                  !currentTask.status ||
+                  currentTask.status === TaskStatus.NotDone
+                ) {
+                  currentTask.status = TaskStatus.Done;
                 } else {
-                  currentTask.status = 0;
+                  currentTask.status = TaskStatus.NotDone;
                 }
+                delayedTaskUpdate(currentTask);
                 setTasks(newTasks);
               }
             }}
@@ -172,10 +176,8 @@ const TasksListing = ({}) => {
           </div>
         </Stack>
       ))}
-      <div
-        style={{ marginLeft: "auto", alignItems: "flex-end" }}
-        onClick={createNewTask}
-      >
+
+      <div style={{}} onClick={createNewTask}>
         <FontAwesomeIcon
           icon={["fas", "circle-plus"]}
           color="white"

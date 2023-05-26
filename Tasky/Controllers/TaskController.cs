@@ -20,6 +20,14 @@ namespace Tasky.Controllers
     {
         private readonly ApplicationDbContext _context;
 
+
+        public enum TaskyStatus
+        {
+            NotCreated,
+            NotDone,
+            Done
+        }
+
         public TaskController(ApplicationDbContext context)
         {
             _context = context;
@@ -36,7 +44,7 @@ namespace Tasky.Controllers
             Int32.TryParse(data["taskListId"]?.ToString(), out int taskListId);
             Int32.TryParse(data["status"]?.ToString(), out int statusOut);
 
-            if (statusOut == 4)
+            if (((TaskyStatus)statusOut) == TaskyStatus.NotCreated)
             {
                 var newTask = new Tasky.Models.Task();
                 newTask.TaskListID = taskListId;
@@ -48,14 +56,18 @@ namespace Tasky.Controllers
                 }
                 newTask.Title = data["title"]?.ToString();
                 newTask.CreatedDate = DateTime.Now;
+                newTask.Status = TaskyStatus.NotDone;
                 _context.Add(newTask);
                 _context.SaveChanges();
             }
             else
             {
+                Console.WriteLine(taskId);
                 var taskQuery = _context.Task.Where(e => e.Id == taskId).ToList();
                 var task = taskQuery.ElementAt(0);
                 task.Title = data["title"]?.ToString();
+                task.Status = (TaskyStatus)statusOut;
+
                 _context.Update(task);
                 _context.SaveChanges();
             }

@@ -32,7 +32,6 @@ const TaskLists = ({}) => {
     if (shareList) {
       data.forEach((list: Tasklist) => {
         if (list.id == shareList.id) {
-          console.log(list.id);
           setShareList(list);
         }
       });
@@ -56,6 +55,7 @@ const TaskLists = ({}) => {
     })
       .then(() => {
         loadTaskLists();
+        toast("Shared list to " + shareEmail, toastProperties);
       })
       .catch((err) => {
         console.log(err.message);
@@ -78,6 +78,7 @@ const TaskLists = ({}) => {
     })
       .then(() => {
         loadTaskLists();
+        toast("Removed sharing from " + email, toastProperties);
       })
       .catch((err) => {
         console.log(err.message);
@@ -86,7 +87,6 @@ const TaskLists = ({}) => {
 
   const handleClose = () => {
     setShowShareModal(false);
-    toast("Saved changes", toastProperties);
     loadTaskLists();
   };
   const handleOpen = () => setShowShareModal(true);
@@ -105,7 +105,7 @@ const TaskLists = ({}) => {
 
   return (
     <div>
-      <h1>Create new tasklist</h1>
+      <h1>Manage tasklists</h1>
       <Table striped bordered hover>
         <thead>
           <tr>
@@ -212,9 +212,6 @@ const TaskLists = ({}) => {
         <Modal.Footer className="primary-background">
           <Button variant="secondary" onClick={handleClose}>
             Close
-          </Button>
-          <Button variant="primary" onClick={handleClose}>
-            Save Changes
           </Button>
         </Modal.Footer>
       </Modal>
