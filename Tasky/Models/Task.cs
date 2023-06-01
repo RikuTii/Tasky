@@ -14,5 +14,7 @@ namespace Tasky.Models
         public int TaskListID { get; set; }
         public virtual TaskList TaskList { get; set; }
         public TaskyStatus? Status { get; set; }
+        public int Ordering { get; set; }
+
     }
 }

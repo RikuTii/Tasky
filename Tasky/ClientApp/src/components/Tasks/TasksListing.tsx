@@ -9,6 +9,7 @@ import debounce from "lodash/debounce";
 import Dropdown from "react-bootstrap/Dropdown";
 import DropdownButton from "react-bootstrap/DropdownButton";
 import { forEach } from "lodash";
+import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 
 const TasksListing = ({}) => {
   const [currentTaskList, setCurrentTaskList] = useState<Tasklist>();
@@ -76,7 +77,7 @@ const TasksListing = ({}) => {
     []
   );
 
-  const onTaskUpdated = async (task: Task) => {
+  const onTaskUpdated = async (task: Task, orderId: number = 0) => {
     const token = await authService.getAccessToken();
     fetch("task/CreateOrUpdateTask", {
       method: "POST",
@@ -85,6 +86,7 @@ const TasksListing = ({}) => {
         id: task?.id,
         status: task?.status,
         taskListId: task?.taskListID ?? task?.taskList?.id,
+        order_task: orderId ?? 0
       }),
       headers: !token
         ? {}
@@ -99,6 +101,122 @@ const TasksListing = ({}) => {
       .catch((err) => {
         console.log(err.message);
       });
+  };
+
+  const reOrderTasks = async (orderedTasks: Task[]) => {
+    const token = await authService.getAccessToken();
+    fetch("task/ReOrderTasks", {
+      method: "POST",
+      body: JSON.stringify({
+        tasks: orderedTasks,
+      }),
+      headers: !token
+        ? {}
+        : {
+            Authorization: `Bearer ${token}`,
+            "Content-type": "application/json; charset=UTF-8",
+          },
+    })
+      .then(() => {
+        if(orderedTasks)
+        refreshTaskLists(orderedTasks[0]?.taskListID ?? orderedTasks[0]?.taskList?.id ?? 0);
+      })
+      .catch((err) => {
+        console.log(err.message);
+      });
+  };
+
+  const reorder = (
+    list: Task[] | undefined,
+    startIndex: number,
+    endIndex: number
+  ) => {
+    const result: Task[] = Array.from(list ?? []);
+    const [removed] = result.splice(startIndex, 1);
+    result.splice(endIndex, 0, removed);
+
+    return result;
+  };
+
+  const onDragEnd = (result: any) => {
+    // dropped outside the list
+    if (!result.destination) {
+      return;
+    }
+
+    if(tasks)
+    console.log("result to", tasks[result.source.index].id, "to", tasks[result.destination.index].id);
+
+    const items: Task[] = reorder(
+      tasks,
+      result.source.index,
+      result.destination.index
+    );
+
+    if(items)
+    {
+      reOrderTasks(items);
+    }
+    //onTaskUpdated(tasks[result.destination.index], tasks[result.source.index].id);
+
+    setTasks(items);
+  };
+
+  const renderSingleTask = (task: Task) => {
+    return (
+      <Stack key={task.id} direction="horizontal" gap={3}>
+        <FontAwesomeIcon icon={["fas", "list"]} color="white" size="1x" />
+        <input
+          type="textarea"
+          placeholder=""
+          value={task.title}
+          onChange={(event) => {
+            const newTasks = [...(tasks ?? [])];
+            const currentTask = newTasks.find((e) => e.id === task.id);
+            if (currentTask) {
+              currentTask.title = event.target.value;
+              setTasks(newTasks);
+              delayedTaskUpdate(currentTask);
+            }
+          }}
+        />
+        <div
+          style={{
+            width: 25,
+            height: 25,
+            border: "2px solid white",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+          onClick={() => {
+            const newTasks = [...(tasks ?? [])];
+            const currentTask = newTasks.find((e) => e.id === task.id);
+            if (currentTask) {
+              if (
+                !currentTask.status ||
+                currentTask.status === TaskStatus.NotDone
+              ) {
+                currentTask.status = TaskStatus.Done;
+              } else {
+                currentTask.status = TaskStatus.NotDone;
+              }
+              delayedTaskUpdate(currentTask);
+              setTasks(newTasks);
+            }
+          }}
+        >
+          {task.status === 1 && (
+            <div style={{ marginLeft: 4 }}>
+              <FontAwesomeIcon
+                icon={["fas", "check"]}
+                color="white"
+                size="1x"
+              />
+            </div>
+          )}
+        </div>
+      </Stack>
+    );
   };
 
   return (
@@ -122,67 +240,40 @@ const TasksListing = ({}) => {
         ))}
       </DropdownButton>
 
-      {tasks?.map((task: Task) => (
-        <Stack key={task.id} direction="horizontal" gap={3}>
-          <FontAwesomeIcon icon={["fas", "list"]} color="white" size="1x" />
-          <input
-            type="textarea"
-            placeholder=""
-            value={task.title}
-            onChange={(event) => {
-              const newTasks = [...tasks];
-              const currentTask = newTasks.find((e) => e.id === task.id);
-              if (currentTask) {
-                currentTask.title = event.target.value;
-                setTasks(newTasks);
-                delayedTaskUpdate(currentTask);
-              }
-            }}
-          />
-          <div
-            style={{
-              width: 25,
-              height: 25,
-              border: "2px solid white",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-            onClick={() => {
-              const newTasks = [...tasks];
-              const currentTask = newTasks.find((e) => e.id === task.id);
-              if (currentTask) {
-                if (
-                  !currentTask.status ||
-                  currentTask.status === TaskStatus.NotDone
-                ) {
-                  currentTask.status = TaskStatus.Done;
-                } else {
-                  currentTask.status = TaskStatus.NotDone;
-                }
-                delayedTaskUpdate(currentTask);
-                setTasks(newTasks);
-              }
-            }}
-          >
-            {task.status === 1 && (
-              <div style={{ marginLeft: 4 }}>
-                <FontAwesomeIcon
-                  icon={["fas", "check"]}
-                  color="white"
-                  size="1x"
-                />
-              </div>
-            )}
-          </div>
-        </Stack>
-      ))}
+      <DragDropContext onDragEnd={onDragEnd}>
+        <Droppable droppableId="droppable">
+          {(provided, snapshot) => (
+            <div {...provided.droppableProps} ref={provided.innerRef}>
+              {tasks?.map((task: Task, index: number) => (
+                <Draggable
+                  key={task.id}
+                  draggableId={String(task.id)}
+                  index={index}
+                >
+                  {(provided, snapshot) => (
+                    <div
+                      ref={provided.innerRef}
+                      {...provided.draggableProps}
+                      {...provided.dragHandleProps}
+                    >
+                      {renderSingleTask(task)}
+                    </div>
+                  )}
+                </Draggable>
+              ))}
+            </div>
+          )}
+        </Droppable>
+      </DragDropContext>
 
-      <div style={{}} onClick={createNewTask}>
+<div style={{position: 'absolute', top: '50%', left: '30%'}}>
+      <div onClick={createNewTask}>
         <FontAwesomeIcon
           icon={["fas", "circle-plus"]}
           color="white"
           size="2x"
         />
+      </div>
       </div>
     </Container>
   );

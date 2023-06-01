@@ -45,7 +45,7 @@ namespace Tasky.Controllers
             {
                 var tasklist = _context.TaskList.
                     Where(e => e.CreatorID == user.Account.Id).
-                    Include(e => e.Tasks!).
+                    Include(e => e.Tasks!.OrderBy(e => e.Ordering)).
                     ThenInclude(e => e.Creator).
                     Include(e => e.Creator).
                     Include(e => e.TaskListMetas!).
@@ -130,6 +130,8 @@ namespace Tasky.Controllers
         {
             if (ModelState.IsValid)
             {
+                Console.WriteLine(
+                    "create list");
                 var userId = User.FindFirstValue(ClaimTypes.NameIdentifier); // will give the user's userId
 
                 ApplicationUser user = _context.Users.Where(e => e.Id == userId).Include(e => e.Account).First();
