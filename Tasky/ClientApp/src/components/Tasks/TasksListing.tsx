@@ -52,7 +52,12 @@ const TasksListing = ({}) => {
   const createNewTask = () => {
     let id = 1;
     if (tasks && tasks?.length > 0) {
-      id = tasks?.slice(-1)[0].id ?? 1;
+      //id = tasks?.slice(-1)[0].id ?? 1;
+      tasks.forEach((task: Task) => {
+        if(task.id && task.id > id) {
+          id = task.id;
+        }
+      });
     }
     let nextId = id + 1;
 
@@ -86,7 +91,7 @@ const TasksListing = ({}) => {
         id: task?.id,
         status: task?.status,
         taskListId: task?.taskListID ?? task?.taskList?.id,
-        order_task: orderId ?? 0
+        order_task: orderId ?? 0,
       }),
       headers: !token
         ? {}
@@ -118,8 +123,10 @@ const TasksListing = ({}) => {
           },
     })
       .then(() => {
-        if(orderedTasks)
-        refreshTaskLists(orderedTasks[0]?.taskListID ?? orderedTasks[0]?.taskList?.id ?? 0);
+        if (orderedTasks)
+          refreshTaskLists(
+            orderedTasks[0]?.taskListID ?? orderedTasks[0]?.taskList?.id ?? 0
+          );
       })
       .catch((err) => {
         console.log(err.message);
@@ -144,21 +151,15 @@ const TasksListing = ({}) => {
       return;
     }
 
-    if(tasks)
-    console.log("result to", tasks[result.source.index].id, "to", tasks[result.destination.index].id);
-
     const items: Task[] = reorder(
       tasks,
       result.source.index,
       result.destination.index
     );
 
-    if(items)
-    {
+    if (items) {
       reOrderTasks(items);
     }
-    //onTaskUpdated(tasks[result.destination.index], tasks[result.source.index].id);
-
     setTasks(items);
   };
 
@@ -246,7 +247,7 @@ const TasksListing = ({}) => {
             <div {...provided.droppableProps} ref={provided.innerRef}>
               {tasks?.map((task: Task, index: number) => (
                 <Draggable
-                  key={task.id}
+                  key={"task" + task.id + task.taskListID}
                   draggableId={String(task.id)}
                   index={index}
                 >
@@ -266,14 +267,14 @@ const TasksListing = ({}) => {
         </Droppable>
       </DragDropContext>
 
-<div style={{position: 'absolute', top: '50%', left: '30%'}}>
-      <div onClick={createNewTask}>
-        <FontAwesomeIcon
-          icon={["fas", "circle-plus"]}
-          color="white"
-          size="2x"
-        />
-      </div>
+      <div style={{ position: "absolute", top: "50%", left: "30%" }}>
+        <div onClick={createNewTask}>
+          <FontAwesomeIcon
+            icon={["fas", "circle-plus"]}
+            color="white"
+            size="2x"
+          />
+        </div>
       </div>
     </Container>
   );
