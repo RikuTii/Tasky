@@ -85,7 +85,7 @@ namespace Tasky.Areas.Identity.Pages.Account
             public bool RememberMe { get; set; }
         }
 
-        public async System.Threading.Tasks.Task OnGetAsync(string returnUrl = null)
+        public async  System.Threading.Tasks.Task OnGetAsync(string returnUrl = null)
         {
             if (!string.IsNullOrEmpty(ErrorMessage))
             {

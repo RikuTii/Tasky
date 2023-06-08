@@ -52,7 +52,6 @@ const TasksListing = ({}) => {
   const createNewTask = () => {
     let id = 1;
     if (tasks && tasks?.length > 0) {
-      //id = tasks?.slice(-1)[0].id ?? 1;
       tasks.forEach((task: Task) => {
         if(task.id && task.id > id) {
           id = task.id;
