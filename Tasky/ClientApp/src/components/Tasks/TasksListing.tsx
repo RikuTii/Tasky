@@ -101,6 +101,12 @@ const TasksListing = ({}) => {
       });
   };
 
+  const doneTasks = tasks?.filter(e => e.status === TaskStatus.Done);
+  const pendingTasks = tasks?.filter(e => e.status !== TaskStatus.Done);
+
+  const filteredTasks = pendingTasks?.concat(doneTasks ?? []);
+
+
   return (
     <Container>
       <h1>Current Tasks</h1>
@@ -122,15 +128,16 @@ const TasksListing = ({}) => {
         ))}
       </DropdownButton>
 
-      {tasks?.map((task: Task) => (
+      {filteredTasks?.map((task: Task) => (
         <Stack key={task.id} direction="horizontal" gap={3}>
           <FontAwesomeIcon icon={["fas", "list"]} color="white" size="1x" />
           <input
             type="textarea"
             placeholder=""
             value={task.title}
+            style={{textDecoration: task.status === TaskStatus.Done ? 'line-through' : ''}}
             onChange={(event) => {
-              const newTasks = [...tasks];
+              const newTasks = [...tasks ?? []];
               const currentTask = newTasks.find((e) => e.id === task.id);
               if (currentTask) {
                 currentTask.title = event.target.value;
@@ -148,7 +155,7 @@ const TasksListing = ({}) => {
               justifyContent: "center",
             }}
             onClick={() => {
-              const newTasks = [...tasks];
+              const newTasks = [...tasks ?? []];
               const currentTask = newTasks.find((e) => e.id === task.id);
               if (currentTask) {
                 if (
@@ -164,7 +171,7 @@ const TasksListing = ({}) => {
               }
             }}
           >
-            {task.status === 1 && (
+            {task.status === TaskStatus.Done && (
               <div style={{ marginLeft: 4 }}>
                 <FontAwesomeIcon
                   icon={["fas", "check"]}
