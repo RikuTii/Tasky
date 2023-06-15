@@ -15,6 +15,7 @@
     "bootstrap": "^5.3.0-alpha3",
     "http-proxy-middleware": "^2.0.6",
     "jquery": "^3.6.0",
+    "lodash": "^4.17.21",
     "merge": "^2.1.1",
     "oidc-client": "^1.11.5",
     "react": "^18.1.0",
@@ -41,6 +42,7 @@
     "workbox-streams": "^6.5.3"
   },
   "devDependencies": {
+    "@types/lodash": "^4.14.194",
     "ajv": "^8.11.0",
     "cross-env": "^7.0.3",
     "eslint": "^8.14.0",
