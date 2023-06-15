@@ -17,10 +17,13 @@ using Duende.IdentityServer.Extensions;
 using Duende.IdentityServer.Validation;
 using Newtonsoft.Json.Linq;
 using System.Text.Json.Nodes;
+using Microsoft.Extensions.Primitives;
+using System.IdentityModel.Tokens.Jwt;
 
 namespace Tasky.Controllers
 {
-    [Authorize]
+    [Authorize(AuthenticationSchemes = "Bearer")]
+    [Authorize(AuthenticationSchemes = "IdentityServerJwtBearer")]
     [ApiController]
     [Route("[controller]")]
     public class TasksController : Controller
@@ -39,7 +42,31 @@ namespace Tasky.Controllers
         public string Index()
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier); // will give the user's userId
+            JwtSecurityToken token = null;
 
+            if (Request.Headers.Keys.Contains("Authorization"))
+            {
+                StringValues values;
+
+                if (Request.Headers.TryGetValue("Authorization", out values))
+                {
+                    var jwt = values.ToString();
+
+                    if (jwt.Contains("Bearer"))
+                    {
+                        jwt = jwt.Replace("Bearer", "").Trim();
+                    }
+
+                    var handler = new JwtSecurityTokenHandler();
+
+                    token = handler.ReadJwtToken(jwt);
+
+                    if (token == null)
+                        return "";
+
+                    userId = token.Subject.ToString();
+                }
+            }
             ApplicationUser user = _context.Users.Where(e => e.Id == userId).Include(e => e.Account).First();
             if (user != null)
             {

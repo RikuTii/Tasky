@@ -39,18 +39,26 @@ namespace Tasky.Controllers
         {
             JObject data = JObject.Parse(json.ToString());
             Int32.TryParse(data["taskListId"]?.ToString(), out int taskListId);
+            if (taskListId == 0) return;
             var tasks = data["tasks"]?.ToList();
-
-           for (var index = 0;index < tasks.Count;index++)
+            if (tasks == null) return;
+            Console.WriteLine(tasks.Count);
+            for (var index = 0;index < tasks.Count;index++)
             {
                 var as_task = tasks[index].ToObject<Tasky.Models.Task>();
+                if(as_task == null) continue;
+                if (as_task.Id < 1) continue;
 
-                var taskQuery = _context.Task.Where(e => e.Id == as_task.Id).ToList();
-                var task = taskQuery.ElementAt(0);
+                var taskQuery = _context.TaskList.Where(e => e.Id == taskListId).Include(e => e.Tasks)?.ToList();
+                var taskList = taskQuery?.ElementAt(0);
 
-                task.Ordering = index+1;
-                _context.Update(task);
-                _context.SaveChanges();
+                var task = taskList?.Tasks?.Where(e => e.Id == as_task.Id).ElementAt(0);
+                if(task != null)
+                {
+                    task.Ordering = index + 1;
+                    _context.Update(task);
+                    _context.SaveChanges();
+                }
             }
         }
 

@@ -42,51 +42,66 @@ namespace Tasky.Controllers
             var username = data["username"]?.ToString();
             var password = data["password"]?.ToString();
 
-            Console.WriteLine("called");
             if (username == "joydip" && password == "joydip123")
             {
+
+               /* var user = _context.Users.Where(e => e.Id == "8fed0172-93ca-4566-9f73-cba1e6988e48").First();
+                if(user != null) 
+                { 
+                    var existingToken = _context.UserTokens.Where(e  => e.UserId == user.Id).First();
+
+                    if(existingToken != null)
+                    {
+                        return Results.Ok(existingToken);
+                    }
+                }*/
+
                 var issuer = _configuration["Jwt:Issuer"];
                 var audience = _configuration["Jwt:Audience"];
                 var strKey = _configuration["Jwt:Key"];
 
                 var key = Base64UrlEncoder.DecodeBytes(strKey);
-                var claims = new List<Claim>
-        {
-            new(JwtRegisteredClaimNames.Sub, username),
-            new(JwtRegisteredClaimNames.Email, username),
-            new Claim("Id", Guid.NewGuid().ToString()),
-            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
-        };
-                /*      var tokenDescriptor = new SecurityTokenDescriptor
-                      {
-                          Subject = new ClaimsIdentity(new[]
-                          {
-                                  new Claim("Id", Guid.NewGuid().ToString()),
-                                  new Claim(JwtRegisteredClaimNames.Sub, username),
-                                  new Claim(JwtRegisteredClaimNames.Email, username),
-                                  new Claim(JwtRegisteredClaimNames.Jti,
-                                  Guid.NewGuid().ToString())
-                               }),
-                          Expires = DateTime.UtcNow.AddMinutes(5),
-                          Issuer = issuer,
-                          Audience = audience,
-                          SigningCredentials = new SigningCredentials
-                          (new SymmetricSecurityKey(Encoding.ASCII.GetBytes("abcdefghijklmnopqrstuvwxyz123456")),
-                          SecurityAlgorithms.HmacSha256)
-                      };
 
-                      */
-                var signingCredentials = new SigningCredentials(
-                new SymmetricSecurityKey(Encoding.UTF8.GetBytes("abcdefghijklmnopqrstuvwxyz123456")),
-                SecurityAlgorithms.HmacSha256);
-                var token = new JwtSecurityToken(issuer, audience,
-                claims, DateTime.UtcNow, DateTime.UtcNow.AddMinutes(30), signingCredentials);
+                var tokenDescriptor = new SecurityTokenDescriptor
+                {
+                    Subject = new ClaimsIdentity(new[]
+                    {
+                        new Claim("Id", Guid.NewGuid().ToString()),
+                        new Claim(JwtRegisteredClaimNames.Sub, "8fed0172-93ca-4566-9f73-cba1e6988e48"),
+                        new Claim(JwtRegisteredClaimNames.Email, username),
+                        new Claim(JwtRegisteredClaimNames.Jti,
+                        Guid.NewGuid().ToString())
+                    }),
+                    Expires = DateTime.UtcNow.AddMinutes(5),
+                    Issuer = issuer,
+                    Audience = audience,
+                    SigningCredentials = new SigningCredentials
+                     (new SymmetricSecurityKey(Encoding.UTF8.GetBytes("abcdefghijklmnopqrstuvwxyz123456")),
+                     SecurityAlgorithms.HmacSha256)
+                };
 
-                string tokenValue = new JwtSecurityTokenHandler().WriteToken(token);
-           //     var tokenHandler = new JwtSecurityTokenHandler();
-            //    var token = tokenHandler.CreateToken(tokenDescriptor);
-             //   var stringToken = tokenHandler.WriteToken(token);
-                return Results.Ok(tokenValue);
+
+
+                var tokenHandler = new JwtSecurityTokenHandler();
+                var token = tokenHandler.CreateToken(tokenDescriptor);
+                var stringToken = tokenHandler.WriteToken(token);
+
+                /*if(user != null)
+                {
+                    var newToken = new IdentityUserToken<string>
+                    {
+                        UserId = user.Id,
+                        Value = stringToken,
+                        Name = "mobile",
+                        LoginProvider = "mobile"
+                    };
+                    _context.Add(newToken);
+                    _context.SaveChanges();
+                }*/
+
+
+
+                return Results.Ok(stringToken);
             }
 
             return Results.Unauthorized();
