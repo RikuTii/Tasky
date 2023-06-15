@@ -19,6 +19,7 @@
     "merge": "^2.1.1",
     "oidc-client": "^1.11.5",
     "react": "^18.1.0",
+    "react-beautiful-dnd": "^13.1.1",
     "react-bootstrap": "^2.7.4",
     "react-dom": "^18.1.0",
     "react-router-bootstrap": "^0.26.1",
@@ -42,7 +43,8 @@
     "workbox-streams": "^6.5.3"
   },
   "devDependencies": {
-    "@types/lodash": "^4.14.194",
+    "@types/lodash": "^4.14.195",
+    "@types/react-beautiful-dnd": "^13.1.4",
     "ajv": "^8.11.0",
     "cross-env": "^7.0.3",
     "eslint": "^8.14.0",

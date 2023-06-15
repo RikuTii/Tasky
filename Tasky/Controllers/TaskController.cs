@@ -34,6 +34,27 @@ namespace Tasky.Controllers
         }
 
         [Authorize]
+        [HttpPost("ReOrderTasks")]
+        public void ReOrderTasks([FromBody] JsonValue json)
+        {
+            JObject data = JObject.Parse(json.ToString());
+            Int32.TryParse(data["taskListId"]?.ToString(), out int taskListId);
+            var tasks = data["tasks"]?.ToList();
+
+           for (var index = 0;index < tasks.Count;index++)
+            {
+                var as_task = tasks[index].ToObject<Tasky.Models.Task>();
+
+                var taskQuery = _context.Task.Where(e => e.Id == as_task.Id).ToList();
+                var task = taskQuery.ElementAt(0);
+
+                task.Ordering = index+1;
+                _context.Update(task);
+                _context.SaveChanges();
+            }
+        }
+
+        [Authorize]
         [HttpPost("CreateOrUpdateTask")]
         public void CreateOrUpdateTask([FromBody] JsonValue json)
         {
@@ -57,17 +78,18 @@ namespace Tasky.Controllers
                 newTask.Title = data["title"]?.ToString();
                 newTask.CreatedDate = DateTime.Now;
                 newTask.Status = TaskyStatus.NotDone;
+                var numTasks = _context.Task.Where(e => e.TaskListID == taskListId).Count();
+                newTask.Ordering = numTasks;
                 _context.Add(newTask);
                 _context.SaveChanges();
             }
             else
             {
-                Console.WriteLine(taskId);
                 var taskQuery = _context.Task.Where(e => e.Id == taskId).ToList();
                 var task = taskQuery.ElementAt(0);
                 task.Title = data["title"]?.ToString();
                 task.Status = (TaskyStatus)statusOut;
-
+ 
                 _context.Update(task);
                 _context.SaveChanges();
             }

@@ -8,19 +8,25 @@ using System.Text.Json.Serialization;
 using System.Text.Json;
 using Tasky.Data;
 using Tasky.Models;
+using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
+using System.Text;
+using System.Text.Json.Nodes;
+using Newtonsoft.Json.Linq;
 
 namespace Tasky.Controllers
 {
-    [Authorize]
     [ApiController]
     [Route("[controller]")]
     public class UserAccountController : Controller
     {
         private readonly ApplicationDbContext _context;
+        private readonly IConfiguration _configuration;
 
-        public UserAccountController(ApplicationDbContext context)
+        public UserAccountController(ApplicationDbContext context, IConfiguration configuration)
         {
             _context = context;
+            _configuration = configuration;
         }
 
         [HttpPost("Register")]
@@ -28,7 +34,66 @@ namespace Tasky.Controllers
         {
 
         }
+        [AllowAnonymous]
+        [HttpPost("CreateToken")]
+        public IResult CreateToken([FromBody] JsonValue json)
+        {
+            JObject data = JObject.Parse(json.ToString());
+            var username = data["username"]?.ToString();
+            var password = data["password"]?.ToString();
 
+            Console.WriteLine("called");
+            if (username == "joydip" && password == "joydip123")
+            {
+                var issuer = _configuration["Jwt:Issuer"];
+                var audience = _configuration["Jwt:Audience"];
+                var strKey = _configuration["Jwt:Key"];
+
+                var key = Base64UrlEncoder.DecodeBytes(strKey);
+                var claims = new List<Claim>
+        {
+            new(JwtRegisteredClaimNames.Sub, username),
+            new(JwtRegisteredClaimNames.Email, username),
+            new Claim("Id", Guid.NewGuid().ToString()),
+            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+        };
+                /*      var tokenDescriptor = new SecurityTokenDescriptor
+                      {
+                          Subject = new ClaimsIdentity(new[]
+                          {
+                                  new Claim("Id", Guid.NewGuid().ToString()),
+                                  new Claim(JwtRegisteredClaimNames.Sub, username),
+                                  new Claim(JwtRegisteredClaimNames.Email, username),
+                                  new Claim(JwtRegisteredClaimNames.Jti,
+                                  Guid.NewGuid().ToString())
+                               }),
+                          Expires = DateTime.UtcNow.AddMinutes(5),
+                          Issuer = issuer,
+                          Audience = audience,
+                          SigningCredentials = new SigningCredentials
+                          (new SymmetricSecurityKey(Encoding.ASCII.GetBytes("abcdefghijklmnopqrstuvwxyz123456")),
+                          SecurityAlgorithms.HmacSha256)
+                      };
+
+                      */
+                var signingCredentials = new SigningCredentials(
+                new SymmetricSecurityKey(Encoding.UTF8.GetBytes("abcdefghijklmnopqrstuvwxyz123456")),
+                SecurityAlgorithms.HmacSha256);
+                var token = new JwtSecurityToken(issuer, audience,
+                claims, DateTime.UtcNow, DateTime.UtcNow.AddMinutes(30), signingCredentials);
+
+                string tokenValue = new JwtSecurityTokenHandler().WriteToken(token);
+           //     var tokenHandler = new JwtSecurityTokenHandler();
+            //    var token = tokenHandler.CreateToken(tokenDescriptor);
+             //   var stringToken = tokenHandler.WriteToken(token);
+                return Results.Ok(tokenValue);
+            }
+
+            return Results.Unauthorized();
+        }
+
+
+        [Authorize]
         [HttpGet("Account")]
         public async Task<IActionResult> Account()
         {
