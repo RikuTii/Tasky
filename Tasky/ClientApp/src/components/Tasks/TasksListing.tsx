@@ -117,6 +117,7 @@ const TasksListing = ({}) => {
     fetch("task/ReOrderTasks", {
       method: "POST",
       body: JSON.stringify({
+        taskListId: currentTaskList?.id,
         tasks: orderedTasks,
       }),
       headers: !token
@@ -150,7 +151,6 @@ const TasksListing = ({}) => {
   };
 
   const onDragEnd = (result: any) => {
-    // dropped outside the list
     if (!result.destination) {
       return;
     }
@@ -249,7 +249,7 @@ const TasksListing = ({}) => {
         <Droppable droppableId="droppable">
           {(provided, snapshot) => (
             <div {...provided.droppableProps} ref={provided.innerRef}>
-              {filteredTasks?.map((task: Task, index: number) => (
+              {tasks?.map((task: Task, index: number) => (
                 <Draggable
                   key={"task" + task.id + task.taskListID}
                   draggableId={String(task.id)}

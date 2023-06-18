@@ -11,7 +11,7 @@
     "Tasky": {
       "commandName": "Project",
       "launchBrowser": true,
-      "applicationUrl": "https://localhost:7266;http://localhost:5266",
+      "applicationUrl": "http://localhost:7266;http://localhost:5266",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development",
         "ASPNETCORE_HOSTINGSTARTUPASSEMBLIES": "Microsoft.AspNetCore.SpaProxy"

@@ -26,11 +26,6 @@ using Microsoft.IdentityModel.Tokens;
 
 namespace Tasky
 {
-    public class User
-    {
-        public string UserName { get; set; }
-        public string Password { get; set; }
-    }
     public class Startup
     {
         public Startup(IConfiguration configuration)
@@ -43,6 +38,7 @@ namespace Tasky
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            Console.WriteLine("adding auth");
             services.AddControllersWithViews(ConfigureMvcOptions)
                 // Newtonsoft.Json is added for compatibility reasons
                 // The recommended approach is to use System.Text.Json for serialization
@@ -64,30 +60,6 @@ namespace Tasky
                     .AddAuthenticationSchemes(JwtBearerDefaults.AuthenticationScheme‌​)
                     .RequireAuthenticatedUser().Build());
             });
-            services.Configure<JwtBearerOptions>(
-            IdentityServerJwtConstants.IdentityServerJwtBearerScheme,
-            options =>
-            {
-                options.Events.OnAuthenticationFailed = async context =>
-                {
-                    await Console.Out.WriteLineAsync("failed");
-                };
-                options.SaveToken = true;
-                options.RequireHttpsMetadata = false;
-                options.TokenValidationParameters = new TokenValidationParameters
-                {
-                    ValidateIssuer = false,
-                    ValidateAudience = false,
-                    ValidateLifetime = false,
-                    ValidateIssuerSigningKey = false,
-                    ValidIssuer = Configuration["Jwt:Issuer"],
-                    ValidAudience = Configuration["Jwt:Audience"],
-                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("abcdefghijklmnopqrstuvwxyz123456")),
-                    ClockSkew = TimeSpan.Zero
-                };
-            });
-
-            services.AddIdentityServer().AddSigningCredential(Configuration["Jwt:Key"]);
             services.AddAuthentication(option =>
             {
                 option.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -100,15 +72,38 @@ namespace Tasky
                 options.RequireHttpsMetadata = false;
                 options.TokenValidationParameters = new TokenValidationParameters
                 {
-                    ValidateIssuer = false,
-                    ValidateAudience = false,
-                    ValidateLifetime = false,
-                    ValidateIssuerSigningKey = false,
+                    ValidateIssuer = true,
+                    ValidateAudience = true,
+                    ValidateLifetime = true,
+                    ValidateIssuerSigningKey = true,
                     ValidIssuer = Configuration["Jwt:Issuer"],
                     ValidAudience = Configuration["Jwt:Audience"],
                     IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("abcdefghijklmnopqrstuvwxyz123456")),
                     ClockSkew = TimeSpan.Zero
                 };
+                options.Events = new Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerEvents
+                {
+                    OnAuthenticationFailed = context =>
+                    {
+                        Console.WriteLine("logg");
+                        if (context.Exception.GetType() == typeof(SecurityTokenExpiredException))
+                        {
+                            var loggerFactory = context.HttpContext.RequestServices
+                                                .GetRequiredService<ILoggerFactory>();
+                            var logger = loggerFactory.CreateLogger("Startup");
+                            logger.LogInformation("Token-Expired");
+                            context.Response.Headers.Add("Token-Expired", "true");
+                        }
+                        return System.Threading.Tasks.Task.CompletedTask;
+                    },
+                    OnMessageReceived = (context) =>
+                    {
+
+                        Console.WriteLine("log");
+                        return Task.FromResult(0);
+                    }
+                };
+
             });
 
         }
@@ -116,6 +111,7 @@ namespace Tasky
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
+            Console.WriteLine("config mvc");
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();

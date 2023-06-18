@@ -16,6 +16,8 @@ namespace Tasky.Models
         public string? Locale { get; set; }
         public string UserID { get; set; }
         public virtual ApplicationUser User { get; set; }
+        public string RefreshToken { get; set; }
+
 
     }
 }
