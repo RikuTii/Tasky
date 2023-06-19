@@ -7,7 +7,7 @@
     <IsPackable>false</IsPackable>
     <SpaRoot>ClientApp\</SpaRoot>
     <DefaultItemExcludes>$(DefaultItemExcludes);$(SpaRoot)node_modules\**</DefaultItemExcludes>
-    <SpaProxyServerUrl>http://localhost:44487</SpaProxyServerUrl>
+    <SpaProxyServerUrl>https://localhost:44487</SpaProxyServerUrl>
     <SpaProxyLaunchCommand>npm start</SpaProxyLaunchCommand>
     <ImplicitUsings>enable</ImplicitUsings>
 	 <IdentityUIFrameworkVersion>Bootstrap4</IdentityUIFrameworkVersion>
