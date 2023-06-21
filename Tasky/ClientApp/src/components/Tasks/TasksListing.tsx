@@ -53,7 +53,7 @@ const TasksListing = ({}) => {
     let id = 1;
     if (tasks && tasks?.length > 0) {
       tasks.forEach((task: Task) => {
-        if(task.id && task.id > id) {
+        if (task.id && task.id > id) {
           id = task.id;
         }
       });
@@ -107,8 +107,32 @@ const TasksListing = ({}) => {
       });
   };
 
-  const doneTasks = tasks?.filter(e => e.status === TaskStatus.Done);
-  const pendingTasks = tasks?.filter(e => e.status !== TaskStatus.Done);
+  const removeTask = async (task: Task) => {
+    const token = await authService.getAccessToken();
+    fetch("task/RemoveTask", {
+      method: "POST",
+      body: JSON.stringify({
+        id: task?.id,
+        taskListId: task?.taskListID ?? task?.taskList?.id,
+      }),
+      headers: !token
+        ? {}
+        : {
+            Authorization: `Bearer ${token}`,
+            "Content-type": "application/json; charset=UTF-8",
+          },
+    })
+      .then(() => {
+        refreshTaskLists(task?.taskListID ?? task?.taskList?.id ?? 0);
+      })
+      .catch((err) => {
+        console.log(err.message);
+      });
+  };
+
+
+  const doneTasks = tasks?.filter((e) => e.status === TaskStatus.Done);
+  const pendingTasks = tasks?.filter((e) => e.status !== TaskStatus.Done);
 
   const filteredTasks = pendingTasks?.concat(doneTasks ?? []);
 
@@ -210,8 +234,8 @@ const TasksListing = ({}) => {
             }
           }}
         >
-          {task.status === 1 && (
-            <div style={{ marginLeft: 4 }}>
+          {task.status === TaskStatus.Done && (
+            <div style={{ marginLeft: 4, marginRight: 8 }}>
               <FontAwesomeIcon
                 icon={["fas", "check"]}
                 color="white"
@@ -220,6 +244,9 @@ const TasksListing = ({}) => {
             </div>
           )}
         </div>
+        <div onClick={() => removeTask(task)}>
+            <FontAwesomeIcon icon={["fas", "trash"]} color="red" size="xl" />
+          </div>
       </Stack>
     );
   };

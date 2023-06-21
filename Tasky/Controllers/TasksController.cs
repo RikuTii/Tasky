@@ -19,6 +19,7 @@ using Newtonsoft.Json.Linq;
 using System.Text.Json.Nodes;
 using Microsoft.Extensions.Primitives;
 using System.IdentityModel.Tokens.Jwt;
+using Microsoft.Build.Framework;
 
 namespace Tasky.Controllers
 {
@@ -41,7 +42,7 @@ namespace Tasky.Controllers
         // GET: Tasks
         public string Index()
         {
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier); // will give the user's userId
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             JwtSecurityToken token = null;
 
             if (Request.Headers.Keys.Contains("Authorization"))
@@ -67,6 +68,7 @@ namespace Tasky.Controllers
                     userId = token.Subject.ToString();
                 }
             }
+
             ApplicationUser user = _context.Users.Where(e => e.Id == userId).Include(e => e.Account).First();
             if (user != null)
             {
@@ -134,24 +136,58 @@ namespace Tasky.Controllers
 
             return "";
         }
+
+        bool IsAuthorizedToTaskList(TaskList list)
+        {
+            if (list != null)
+            {
+                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+                ApplicationUser user = _context.Users.Where(e => e.Id == userId).Include(e => e.Account).First();
+                if (user != null)
+                {
+                    if(list.CreatorID == user.Account.Id)
+                    {
+                        return true;
+                    }
+
+                   /* var metas = _context.TaskListMeta.Where(e => e.TaskListID == list.Id).ToList();
+                    foreach(var item in metas)
+                    {
+                        if(item.UserAccountID == user.Account.Id)
+                        {
+                            return true;
+                        }
+                    }*/
+
+
+                }
+            }
+            return false;
+        }
+
         [HttpGet("TaskList")]
         // GET: Tasks
-        public string TaskList()
+        public IResult TaskList([FromQuery] int taskListId)
         {
-            return JsonSerializer.Serialize(_context.TaskList.Include(e => e.Creator).ToListAsync(),
-            new JsonSerializerOptions
+            Console.WriteLine(taskListId) ;
+            if (taskListId > 0)
             {
-                ReferenceHandler = ReferenceHandler.IgnoreCycles,
-                WriteIndented = true,
-                DictionaryKeyPolicy = JsonNamingPolicy.CamelCase,
-                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-            });
+                var tasklist = _context.TaskList.Where(e => e.Id == taskListId).Include(e => e.Tasks!).First();
+                if(tasklist != null)
+                {
+                    if(IsAuthorizedToTaskList(tasklist))
+                    {
+                        return Results.Ok(tasklist);
+                    }
+                }
+            }
+
+            return Results.BadRequest();
         }
 
         // POST: Tasks/Create
         // To protect from overposting attacks, enable the specific properties you want to bind to.
-
-        [Authorize]
         [HttpPost("CreateTaskList")]
         public void CreateTaskList([Bind("Name,Description")] Tasky.Models.TaskList task)
         {
@@ -178,8 +214,6 @@ namespace Tasky.Controllers
             }
 
         }
-
-        [Authorize]
         [HttpPost("ShareTaskList")]
         public void ShareTaskList([FromBody] JsonValue json)
         {
@@ -212,7 +246,6 @@ namespace Tasky.Controllers
                 }
             }
         }
-        [Authorize]
         [HttpPost("RemoveShareTaskList")]
         public void RemoveShareTaskList([FromBody] JsonValue json)
         {
