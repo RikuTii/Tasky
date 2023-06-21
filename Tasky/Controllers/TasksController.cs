@@ -151,14 +151,14 @@ namespace Tasky.Controllers
                         return true;
                     }
 
-                   /* var metas = _context.TaskListMeta.Where(e => e.TaskListID == list.Id).ToList();
+                    var metas = _context.TaskListMeta.Where(e => e.TaskListID == list.Id).ToList();
                     foreach(var item in metas)
                     {
                         if(item.UserAccountID == user.Account.Id)
                         {
                             return true;
                         }
-                    }*/
+                    }
 
 
                 }
@@ -167,13 +167,12 @@ namespace Tasky.Controllers
         }
 
         [HttpGet("TaskList")]
-        // GET: Tasks
         public IResult TaskList([FromQuery] int taskListId)
         {
             Console.WriteLine(taskListId) ;
             if (taskListId > 0)
             {
-                var tasklist = _context.TaskList.Where(e => e.Id == taskListId).Include(e => e.Tasks!).First();
+                var tasklist = _context.TaskList.Where(e => e.Id == taskListId).Include(e => e.Tasks!.OrderBy(e => e.Ordering)).First();
                 if(tasklist != null)
                 {
                     if(IsAuthorizedToTaskList(tasklist))
@@ -186,16 +185,12 @@ namespace Tasky.Controllers
             return Results.BadRequest();
         }
 
-        // POST: Tasks/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
         [HttpPost("CreateTaskList")]
         public void CreateTaskList([Bind("Name,Description")] Tasky.Models.TaskList task)
         {
             if (ModelState.IsValid)
             {
-                Console.WriteLine(
-                    "create list");
-                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier); // will give the user's userId
+                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
                 ApplicationUser user = _context.Users.Where(e => e.Id == userId).Include(e => e.Account).First();
                 if (user != null)
@@ -203,14 +198,9 @@ namespace Tasky.Controllers
                     task.CreatedDate = DateTime.Now;
                     task.CreatorID = user.Account.Id;
                     task.Creator = user.Account;
-                    // var tasks = new List<Tasky.Models.Task>();
-                    //task.Tasks = tasks;
                     _context.Add(task);
                     _context.SaveChangesAsync();
                 }
-                //        var userName = User.FindFirstValue(ClaimTypes.Name); // will give the user's userName
-                // var user = await _userManager.FindByNameAsync(User.Identity.Name);
-
             }
 
         }
